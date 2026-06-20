@@ -1,0 +1,883 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <title>Hamster Clicker — Хамстер Койн</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+        }
+
+        body {
+            background: #0a0a0f;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            padding: 12px;
+            margin: 0;
+        }
+
+        .game-container {
+            background: linear-gradient(145deg, #1a1a2e, #0f0f1a);
+            border-radius: 32px;
+            padding: 20px 18px 24px;
+            max-width: 420px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.9);
+            border: 1px solid rgba(255, 215, 0, 0.05);
+        }
+
+        /* ============ ШАПКА ============ */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .coin-balance {
+            background: rgba(255, 215, 0, 0.08);
+            border: 1px solid rgba(255, 215, 0, 0.12);
+            border-radius: 20px;
+            padding: 8px 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .coin-icon {
+            font-size: 22px;
+        }
+
+        .coin-amount {
+            font-size: 20px;
+            font-weight: 700;
+            color: #ffd700;
+        }
+
+        .level-display {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 20px;
+            padding: 8px 16px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 14px;
+            color: #8892b0;
+        }
+
+        .level-display span {
+            color: #ffd700;
+            font-weight: 700;
+            font-size: 18px;
+        }
+
+        /* ============ ВЕРХНИЕ СТАТЫ ============ */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+
+        .stat-item {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 14px;
+            padding: 10px 6px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.04);
+        }
+
+        .stat-item .label {
+            font-size: 10px;
+            text-transform: uppercase;
+            color: #64748b;
+            letter-spacing: 0.5px;
+        }
+
+        .stat-item .value {
+            font-size: 18px;
+            font-weight: 700;
+            color: #e2e8f0;
+            margin-top: 2px;
+        }
+
+        .stat-item .value.gold {
+            color: #ffd700;
+        }
+
+        .stat-item .value.green {
+            color: #4ade80;
+        }
+
+        /* ============ ХАМСТЕР (КЛИКАБЕЛЬНЫЙ) ============ */
+        .hamster-area {
+            margin: 8px 0 16px;
+            cursor: pointer;
+            text-align: center;
+            position: relative;
+        }
+
+        .hamster-circle {
+            width: 160px;
+            height: 160px;
+            border-radius: 50%;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 85px;
+            transition: all 0.15s ease;
+            background: radial-gradient(circle at 30% 30%, #2d2d44, #1a1a2e);
+            border: 3px solid rgba(255, 215, 0, 0.15);
+            box-shadow: 0 0 40px rgba(255, 215, 0, 0.05);
+            position: relative;
+        }
+
+        .hamster-circle:active {
+            transform: scale(0.92);
+        }
+
+        @keyframes pulseHamster {
+            0%, 100% { box-shadow: 0 0 30px rgba(255, 215, 0, 0.05); }
+            50% { box-shadow: 0 0 60px rgba(255, 215, 0, 0.12); }
+        }
+
+        .hamster-circle {
+            animation: pulseHamster 2s ease-in-out infinite;
+        }
+
+        .tap-effect {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 24px;
+            font-weight: 800;
+            color: #ffd700;
+            pointer-events: none;
+            opacity: 0;
+            text-shadow: 0 0 30px rgba(255, 215, 0, 0.5);
+        }
+
+        .tap-effect.show {
+            animation: tapAnim 0.8s ease-out forwards;
+        }
+
+        @keyframes tapAnim {
+            0% { opacity: 1; transform: translate(-50%, -50%) scale(0.5); }
+            100% { opacity: 0; transform: translate(-50%, -120%) scale(1.5); }
+        }
+
+        .click-counter {
+            font-size: 13px;
+            color: #64748b;
+            margin-top: 8px;
+        }
+
+        .click-counter span {
+            color: #ffd700;
+            font-weight: 700;
+        }
+
+        /* ============ ВКЛАДКИ ============ */
+        .tabs {
+            display: flex;
+            gap: 6px;
+            margin: 16px 0 12px;
+        }
+
+        .tab-btn {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 14px;
+            padding: 10px;
+            color: #64748b;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+        }
+
+        .tab-btn.active {
+            background: rgba(255, 215, 0, 0.08);
+            border-color: rgba(255, 215, 0, 0.2);
+            color: #ffd700;
+        }
+
+        .tab-btn:hover {
+            background: rgba(255, 255, 255, 0.06);
+        }
+
+        /* ============ КАРТОЧКИ ============ */
+        .cards-container {
+            min-height: 200px;
+        }
+
+        .cards-grid {
+            display: none;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 6px;
+        }
+
+        .cards-grid.active {
+            display: grid;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 16px;
+            padding: 14px 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+
+        .card:hover {
+            background: rgba(255, 255, 255, 0.06);
+            border-color: rgba(255, 215, 0, 0.15);
+            transform: translateY(-2px);
+        }
+
+        .card:active {
+            transform: scale(0.96);
+        }
+
+        .card.disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .card.owned {
+            border-color: rgba(74, 222, 128, 0.2);
+            background: rgba(74, 222, 128, 0.04);
+        }
+
+        .card .icon {
+            font-size: 28px;
+            margin-bottom: 6px;
+            display: block;
+        }
+
+        .card .name {
+            font-size: 13px;
+            font-weight: 600;
+            color: #e2e8f0;
+            margin-bottom: 2px;
+        }
+
+        .card .desc {
+            font-size: 11px;
+            color: #64748b;
+            margin-bottom: 8px;
+            line-height: 1.3;
+        }
+
+        .card .cost {
+            font-size: 13px;
+            font-weight: 700;
+            color: #ffd700;
+            background: rgba(255, 215, 0, 0.08);
+            padding: 4px 12px;
+            border-radius: 12px;
+            display: inline-block;
+            border: 1px solid rgba(255, 215, 0, 0.08);
+        }
+
+        .card .level-badge {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: rgba(255, 255, 255, 0.06);
+            border-radius: 10px;
+            padding: 2px 10px;
+            font-size: 11px;
+            color: #8892b0;
+        }
+
+        .card .level-badge span {
+            color: #ffd700;
+            font-weight: 700;
+        }
+
+        .card.legendary {
+            border-color: rgba(255, 215, 0, 0.3);
+            background: rgba(255, 215, 0, 0.04);
+        }
+
+        .card.legendary .name {
+            color: #ffd700;
+        }
+
+        .card.epic {
+            border-color: rgba(168, 85, 247, 0.3);
+            background: rgba(168, 85, 247, 0.04);
+        }
+
+        .card.epic .name {
+            color: #a855f7;
+        }
+
+        .card.rare {
+            border-color: rgba(59, 130, 246, 0.3);
+            background: rgba(59, 130, 246, 0.04);
+        }
+
+        .card.rare .name {
+            color: #3b82f6;
+        }
+
+        /* ============ СООБЩЕНИЕ ============ */
+        .message-area {
+            margin-top: 14px;
+            padding-top: 12px;
+            border-top: 1px solid rgba(255, 255, 255, 0.04);
+        }
+
+        .game-message {
+            color: #64748b;
+            font-size: 13px;
+            text-align: center;
+            min-height: 20px;
+            transition: all 0.3s;
+        }
+
+        .game-message.gold {
+            color: #ffd700;
+        }
+
+        /* ============ КНОПКИ ДЕЙСТВИЙ ============ */
+        .action-bar {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .action-btn {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 14px;
+            padding: 10px;
+            color: #8892b0;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+        }
+
+        .action-btn:hover {
+            background: rgba(255, 255, 255, 0.06);
+        }
+
+        /* ============ АДАПТИВ ============ */
+        @media (max-width: 420px) {
+            .game-container {
+                padding: 14px 12px 18px;
+            }
+            .hamster-circle {
+                width: 130px;
+                height: 130px;
+                font-size: 70px;
+            }
+            .coin-amount {
+                font-size: 17px;
+            }
+            .cards-grid {
+                gap: 8px;
+            }
+            .card {
+                padding: 12px 10px;
+            }
+            .card .icon {
+                font-size: 24px;
+            }
+            .stats-grid .value {
+                font-size: 15px;
+            }
+            .stat-item {
+                padding: 8px 4px;
+            }
+        }
+
+        @media (max-width: 360px) {
+            .hamster-circle {
+                width: 110px;
+                height: 110px;
+                font-size: 60px;
+            }
+            .cards-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="game-container">
+        <!-- ШАПКА -->
+        <div class="header">
+            <div class="coin-balance">
+                <span class="coin-icon">🪙</span>
+                <span class="coin-amount" id="coinDisplay">0</span>
+            </div>
+            <div class="level-display">
+                ⭐ Уровень <span id="levelDisplay">1</span>
+            </div>
+        </div>
+
+        <!-- СТАТЫ -->
+        <div class="stats-grid">
+            <div class="stat-item">
+                <div class="label">👆 Сила клика</div>
+                <div class="value gold" id="clickPowerDisplay">1</div>
+            </div>
+            <div class="stat-item">
+                <div class="label">⚡ В секунду</div>
+                <div class="value green" id="perSecondDisplay">0</div>
+            </div>
+            <div class="stat-item">
+                <div class="label">🎯 Всего кликов</div>
+                <div class="value" id="totalClicksDisplay">0</div>
+            </div>
+        </div>
+
+        <!-- ХАМСТЕР -->
+        <div class="hamster-area" id="hamsterArea">
+            <div class="hamster-circle" id="hamsterCircle">
+                🐹
+                <div class="tap-effect" id="tapEffect">+1</div>
+            </div>
+            <div class="click-counter">
+                👆 Кликов: <span id="clickCountDisplay">0</span>
+            </div>
+        </div>
+
+        <!-- ВКЛАДКИ -->
+        <div class="tabs">
+            <button class="tab-btn active" data-tab="upgrades">📈 Улучшения</button>
+            <button class="tab-btn" data-tab="cards">🃏 Карточки</button>
+            <button class="tab-btn" data-tab="special">⭐ Особые</button>
+        </div>
+
+        <!-- КОНТЕНТ ВКЛАДОК -->
+        <div class="cards-container">
+            <div class="cards-grid active" id="tabUpgrades"></div>
+            <div class="cards-grid" id="tabCards"></div>
+            <div class="cards-grid" id="tabSpecial"></div>
+        </div>
+
+        <!-- СООБЩЕНИЕ -->
+        <div class="message-area">
+            <div class="game-message" id="gameMessage">👋 Добро пожаловать! Кликай по хомяку!</div>
+        </div>
+
+        <!-- ДЕЙСТВИЯ -->
+        <div class="action-bar">
+            <button class="action-btn" id="resetBtn">🔄 Сброс</button>
+            <button class="action-btn" id="boostBtn">🚀 Буст x2 (15с)</button>
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            // ============ ИГРОВОЕ СОСТОЯНИЕ ============
+            const state = {
+                coins: 0,
+                level: 1,
+                clickPower: 1,
+                perSecond: 0,
+                totalClicks: 0,
+                boostMultiplier: 1,
+                boostTimer: null,
+                upgrades: {
+                    clickPower: { level: 0, cost: 10, maxLevel: 25 },
+                    autoClicker: { level: 0, cost: 30, maxLevel: 20 },
+                    critChance: { level: 0, cost: 50, maxLevel: 15 },
+                    multiClick: { level: 0, cost: 80, maxLevel: 10 },
+                },
+                cards: {
+                    speed: { level: 0, owned: false, cost: 100, maxLevel: 10 },
+                    greed: { level: 0, owned: false, cost: 150, maxLevel: 8 },
+                    lucky: { level: 0, owned: false, cost: 200, maxLevel: 8 },
+                    rich: { level: 0, owned: false, cost: 300, maxLevel: 6 },
+                    shadow: { level: 0, owned: false, cost: 400, maxLevel: 6 },
+                    chaos: { level: 0, owned: false, cost: 600, maxLevel: 5 },
+                },
+                special: {
+                    void: { level: 0, owned: false, cost: 800, maxLevel: 5 },
+                    infinity: { level: 0, owned: false, cost: 1200, maxLevel: 4 },
+                    god: { level: 0, owned: false, cost: 2000, maxLevel: 3 },
+                }
+            };
+
+            // ============ DOM ЭЛЕМЕНТЫ ============
+            const el = {
+                coinDisplay: document.getElementById('coinDisplay'),
+                levelDisplay: document.getElementById('levelDisplay'),
+                clickPowerDisplay: document.getElementById('clickPowerDisplay'),
+                perSecondDisplay: document.getElementById('perSecondDisplay'),
+                totalClicksDisplay: document.getElementById('totalClicksDisplay'),
+                clickCountDisplay: document.getElementById('clickCountDisplay'),
+                hamsterArea: document.getElementById('hamsterArea'),
+                tapEffect: document.getElementById('tapEffect'),
+                gameMessage: document.getElementById('gameMessage'),
+                tabUpgrades: document.getElementById('tabUpgrades'),
+                tabCards: document.getElementById('tabCards'),
+                tabSpecial: document.getElementById('tabSpecial'),
+                resetBtn: document.getElementById('resetBtn'),
+                boostBtn: document.getElementById('boostBtn'),
+            };
+
+            // ============ КОНФИГ КАРТОЧЕК ============
+            const CARD_CONFIG = {
+                upgrades: [
+                    { id: 'clickPower', icon: '💪', name: 'Сила клика', desc: '+1 к силе клика', rarity: 'common' },
+                    { id: 'autoClicker', icon: '🤖', name: 'Автокликер', desc: '+1 монета/сек', rarity: 'common' },
+                    { id: 'critChance', icon: '⚡', name: 'Критический удар', desc: '+2% шанс x2', rarity: 'rare' },
+                    { id: 'multiClick', icon: '💥', name: 'Мультиклик', desc: '+1 монета за клик', rarity: 'rare' },
+                ],
+                cards: [
+                    { id: 'speed', icon: '🏃', name: 'Скорость', desc: 'Автокликер +2/сек', rarity: 'common' },
+                    { id: 'greed', icon: '💰', name: 'Жадность', desc: 'Монеты +15% за клик', rarity: 'common' },
+                    { id: 'lucky', icon: '🍀', name: 'Удача', desc: '+2% шанс x3', rarity: 'rare' },
+                    { id: 'rich', icon: '💎', name: 'Богатство', desc: '+20% ко всем доходам', rarity: 'rare' },
+                    { id: 'shadow', icon: '🌑', name: 'Тень', desc: 'Автокликер x1.5', rarity: 'epic' },
+                    { id: 'chaos', icon: '🌀', name: 'Хаос', desc: 'Шанс x5 +2%', rarity: 'epic' },
+                ],
+                special: [
+                    { id: 'void', icon: '🕳️', name: 'Бездна', desc: 'Все бонусы x1.5', rarity: 'epic' },
+                    { id: 'infinity', icon: '♾️', name: 'Бесконечность', desc: 'Всё в 2 раза', rarity: 'legendary' },
+                    { id: 'god', icon: '✨', name: 'Божество', desc: 'Всё в 3 раза', rarity: 'legendary' },
+                ]
+            };
+
+            // ============ ОБНОВЛЕНИЕ UI ============
+            function updateUI() {
+                const coins = Math.floor(state.coins);
+                const perSec = state.perSecond * state.boostMultiplier;
+
+                el.coinDisplay.textContent = coins;
+                el.levelDisplay.textContent = state.level;
+                el.clickPowerDisplay.textContent = state.clickPower;
+                el.perSecondDisplay.textContent = perSec.toFixed(1);
+                el.totalClicksDisplay.textContent = state.totalClicks;
+                el.clickCountDisplay.textContent = state.totalClicks;
+
+                renderCards();
+            }
+
+            // ============ РЕНДЕР КАРТОЧЕК ============
+            function renderCards() {
+                renderCardList('tabUpgrades', CARD_CONFIG.upgrades, state.upgrades);
+                renderCardList('tabCards', CARD_CONFIG.cards, state.cards);
+                renderCardList('tabSpecial', CARD_CONFIG.special, state.special);
+            }
+
+            function renderCardList(tabId, configs, stateObj) {
+                const container = document.getElementById(tabId);
+                container.innerHTML = '';
+
+                configs.forEach(cfg => {
+                    const card = stateObj[cfg.id];
+                    if (!card) return;
+
+                    const level = card.level;
+                    const maxLevel = card.maxLevel;
+                    const isMaxLevel = level >= maxLevel;
+                    const cost = Math.floor(card.cost * Math.pow(1.5, level));
+
+                    const cardEl = document.createElement('div');
+                    let rarityClass = '';
+                    if (cfg.rarity === 'legendary') rarityClass = 'legendary';
+                    else if (cfg.rarity === 'epic') rarityClass = 'epic';
+                    else if (cfg.rarity === 'rare') rarityClass = 'rare';
+
+                    cardEl.className = `card ${rarityClass}`;
+                    if (level > 0) cardEl.classList.add('owned');
+                    
+                    const canBuy = state.coins >= cost && !isMaxLevel;
+                    if (!canBuy) cardEl.classList.add('disabled');
+
+                    cardEl.innerHTML = `
+                        <span class="icon">${cfg.icon}</span>
+                        <div class="name">${cfg.name}</div>
+                        <div class="desc">${cfg.desc}</div>
+                        <div class="cost">${isMaxLevel ? '✅ MAX' : cost + ' 🪙'}</div>
+                        <div class="level-badge">Ур. <span>${level}/${maxLevel}</span></div>
+                    `;
+
+                    if (!isMaxLevel) {
+                        cardEl.addEventListener('click', () => buyCard(cfg.id, cfg, stateObj));
+                    }
+
+                    container.appendChild(cardEl);
+                });
+            }
+
+            // ============ ПОКУПКА КАРТЫ ============
+            function buyCard(id, cfg, stateObj) {
+                const card = stateObj[id];
+                if (!card) return;
+                
+                const level = card.level;
+                const maxLevel = card.maxLevel;
+                const cost = Math.floor(card.cost * Math.pow(1.5, level));
+                
+                if (state.coins < cost || level >= maxLevel) return;
+
+                state.coins -= cost;
+                card.level += 1;
+                card.owned = true;
+
+                // Применяем эффекты
+                applyEffect(id, cfg);
+
+                // Сообщение
+                el.gameMessage.textContent = `🎉 Куплено: ${cfg.name}! Ур. ${card.level}`;
+                el.gameMessage.className = 'game-message gold';
+
+                checkLevelUp();
+                updateUI();
+            }
+
+            // ============ ПРИМЕНЕНИЕ ЭФФЕКТОВ ============
+            function applyEffect(id, cfg) {
+                const card = state.upgrades[id] || state.cards[id] || state.special[id];
+                const level = card.level;
+
+                switch(id) {
+                    case 'clickPower':
+                        state.clickPower = 1 + level;
+                        break;
+                    case 'autoClicker':
+                        state.perSecond = level;
+                        break;
+                    case 'critChance':
+                        // Обрабатывается в клике
+                        break;
+                    case 'multiClick':
+                        state.clickPower = 1 + level * 2;
+                        break;
+                    case 'speed':
+                        state.perSecond += 2;
+                        break;
+                    case 'greed':
+                        // Обрабатывается в клике
+                        break;
+                    case 'lucky':
+                        // Обрабатывается в клике
+                        break;
+                    case 'rich':
+                        // Обрабатывается в клике
+                        break;
+                    case 'shadow':
+                        state.perSecond = Math.floor(state.perSecond * 1.5);
+                        break;
+                    case 'chaos':
+                        // Обрабатывается в клике
+                        break;
+                    case 'void':
+                        state.boostMultiplier = 1 + level * 0.5;
+                        break;
+                    case 'infinity':
+                        state.boostMultiplier = 1 + level * 1;
+                        break;
+                    case 'god':
+                        state.boostMultiplier = 1 + level * 2;
+                        break;
+                }
+            }
+
+            // ============ ПРОВЕРКА УРОВНЯ ============
+            function checkLevelUp() {
+                const newLevel = 1 + Math.floor(state.coins / 300);
+                if (newLevel > state.level) {
+                    state.level = newLevel;
+                    state.clickPower += 0.5;
+                    el.gameMessage.textContent = `⬆️ УРОВЕНЬ ${state.level}! Бонус +0.5 к силе!`;
+                    el.gameMessage.className = 'game-message gold';
+                }
+            }
+
+            // ============ КЛИК ПО ХАМСТЕРУ ============
+            function handleClick(e) {
+                let clicks = state.clickPower * state.boostMultiplier;
+
+                // Критический удар
+                const critChance = state.upgrades.critChance.level * 2;
+                if (Math.random() * 100 < critChance) {
+                    clicks *= 2;
+                }
+
+                // Удача (шанс x3)
+                const luckyLevel = state.cards.lucky?.level || 0;
+                if (Math.random() * 100 < luckyLevel * 2) {
+                    clicks *= 3;
+                }
+
+                // Жадность (+15% за уровень)
+                const greedLevel = state.cards.greed?.level || 0;
+                if (greedLevel > 0) {
+                    clicks *= (1 + greedLevel * 0.15);
+                }
+
+                // Богатство (+20% за уровень)
+                const richLevel = state.cards.rich?.level || 0;
+                if (richLevel > 0) {
+                    clicks *= (1 + richLevel * 0.2);
+                }
+
+                // Хаос (шанс x5)
+                const chaosLevel = state.cards.chaos?.level || 0;
+                if (Math.random() * 100 < chaosLevel * 2) {
+                    clicks *= 5;
+                }
+
+                const finalClicks = Math.floor(clicks);
+                state.coins += finalClicks;
+                state.totalClicks += finalClicks;
+
+                // Визуал
+                const tapEl = el.tapEffect;
+                tapEl.textContent = `+${finalClicks}`;
+                tapEl.className = 'tap-effect show';
+                setTimeout(() => tapEl.className = 'tap-effect', 800);
+
+                checkLevelUp();
+                updateUI();
+            }
+
+            // ============ БУСТ X2 ============
+            function boost() {
+                if (state.boostTimer) return;
+
+                state.boostMultiplier = 2;
+                el.gameMessage.textContent = '🚀 БУСТ X2 АКТИВИРОВАН! 15 секунд!';
+                el.gameMessage.className = 'game-message gold';
+
+                state.boostTimer = setTimeout(() => {
+                    state.boostMultiplier = 1;
+                    el.gameMessage.textContent = '⏰ Буст X2 закончился';
+                    el.gameMessage.className = 'game-message';
+                    state.boostTimer = null;
+                    updateUI();
+                }, 15000);
+
+                updateUI();
+            }
+
+            // ============ СБРОС ============
+            function resetGame() {
+                if (!confirm('Сбросить прогресс?')) return;
+
+                state.coins = 0;
+                state.level = 1;
+                state.clickPower = 1;
+                state.perSecond = 0;
+                state.totalClicks = 0;
+                state.boostMultiplier = 1;
+                state.upgrades = {
+                    clickPower: { level: 0, cost: 10, maxLevel: 25 },
+                    autoClicker: { level: 0, cost: 30, maxLevel: 20 },
+                    critChance: { level: 0, cost: 50, maxLevel: 15 },
+                    multiClick: { level: 0, cost: 80, maxLevel: 10 },
+                };
+                state.cards = {
+                    speed: { level: 0, owned: false, cost: 100, maxLevel: 10 },
+                    greed: { level: 0, owned: false, cost: 150, maxLevel: 8 },
+                    lucky: { level: 0, owned: false, cost: 200, maxLevel: 8 },
+                    rich: { level: 0, owned: false, cost: 300, maxLevel: 6 },
+                    shadow: { level: 0, owned: false, cost: 400, maxLevel: 6 },
+                    chaos: { level: 0, owned: false, cost: 600, maxLevel: 5 },
+                };
+                state.special = {
+                    void: { level: 0, owned: false, cost: 800, maxLevel: 5 },
+                    infinity: { level: 0, owned: false, cost: 1200, maxLevel: 4 },
+                    god: { level: 0, owned: false, cost: 2000, maxLevel: 3 },
+                };
+
+                if (state.boostTimer) {
+                    clearTimeout(state.boostTimer);
+                    state.boostTimer = null;
+                }
+
+                el.gameMessage.textContent = '🔄 Прогресс сброшен! Начинай заново!';
+                el.gameMessage.className = 'game-message';
+                updateUI();
+            }
+
+            // ============ ВКЛАДКИ ============
+            function setupTabs() {
+                const tabs = document.querySelectorAll('.tab-btn');
+                const contents = {
+                    upgrades: document.getElementById('tabUpgrades'),
+                    cards: document.getElementById('tabCards'),
+                    special: document.getElementById('tabSpecial'),
+                };
+
+                tabs.forEach(tab => {
+                    tab.addEventListener('click', () => {
+                        tabs.forEach(t => t.classList.remove('active'));
+                        tab.classList.add('active');
+
+                        const tabName = tab.dataset.tab;
+                        Object.keys(contents).forEach(key => {
+                            contents[key].classList.toggle('active', key === tabName);
+                        });
+
+                        renderCards();
+                    });
+                });
+            }
+
+            // ============ АВТОКЛИКЕР ============
+            let autoInterval = null;
+
+            function startAutoClicker() {
+                if (autoInterval) clearInterval(autoInterval);
+                autoInterval = setInterval(() => {
+                    if (state.perSecond > 0) {
+                        const perSec = state.perSecond * state.boostMultiplier;
+                        state.coins += perSec;
+                        checkLevelUp();
+                        updateUI();
+                    }
+                }, 1000);
+            }
+
+            // ============ ИНИЦИАЛИЗАЦИЯ ============
+            function init() {
+                el.hamsterArea.addEventListener('click', handleClick);
+                el.hamsterArea.addEventListener('touchstart', (e) => {
+                    const touch = e.touches[0];
+                    handleClick({ clientX: touch.clientX, clientY: touch.clientY });
+                });
+
+                el.resetBtn.addEventListener('click', resetGame);
+                el.boostBtn.addEventListener('click', boost);
+
+                setupTabs();
+                startAutoClicker();
+                renderCards();
+                updateUI();
+            }
+
+            init();
+        })();
+    </script>
+
+</body>
+</html>
